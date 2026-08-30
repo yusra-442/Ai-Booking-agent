@@ -10,7 +10,7 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [timezone, setTimezone] = useState('America/New_York')
+  const [timezone, setTimezone] = useState('Asia/Karachi')
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 

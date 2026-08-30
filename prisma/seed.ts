@@ -20,10 +20,11 @@ async function main() {
           phone: '+1 (555) 123-4567',
           email: 'hello@demosalOn.com',
           address: '123 Main Street',
-          city: 'New York',
-          state: 'NY',
-          zipCode: '10001',
-          timezone: 'America/New_York',
+          city: 'Karachi',
+     state: 'Sindh',
+          zipCode: '74000',
+     country: 'Pakistan',
+          timezone: 'Asia/Karachi',
           workingHours: {
             create: [
               { dayOfWeek: 1, startTime: '09:00', endTime: '18:00' },

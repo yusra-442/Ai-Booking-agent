@@ -54,7 +54,7 @@ model Business {
   state       String?
   zipCode     String?
   country     String?
-  timezone    String   @default("America/New_York")
+  timezone    String   @default("Asia/Karachi")
   logo        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
