@@ -5,12 +5,12 @@ async function main() {
   console.log('Seeding database...')
 
   // Create demo user and business
-  const hashedPassword = await bcrypt.hash('password123', 12)
+  const hashedPassword = await bcrypt.hash('mayava1122', 12)
 
   const user = await db.user.create({
     data: {
       name: 'Demo User',
-      email: 'demo@example.com',
+      email: 'mayava891@gmail.com',
       password: hashedPassword,
       role: 'OWNER',
       business: {
@@ -132,7 +132,7 @@ async function main() {
   })
 
   console.log('Seed completed!')
-  console.log('Demo login: demo@example.com / password123')
+  console.log('Demo login: mayava891@gmail.com / mayava1122')
 }
 
 main()
