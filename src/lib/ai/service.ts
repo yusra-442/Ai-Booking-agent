@@ -154,15 +154,33 @@ class MockAIService implements AIService {
   async chat(messages: AIMessage[], systemPrompt?: string): Promise<AIResponse> {
     const lastMessage = messages[messages.length - 1]?.content.toLowerCase() || ''
 
+    // Extract services from system prompt if available
+    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
+    const servicesInfo = servicesMatch ? servicesMatch[1] : 'various services'
+    const businessNameMatch = systemPrompt?.match(/AI booking assistant for (.+?)\./)
+    const businessName = businessNameMatch ? businessNameMatch[1] : 'our business'
+
     // Simulate AI responses based on keywords
-    if (lastMessage.includes('book') || lastMessage.includes('appointment')) {
+    if (lastMessage.includes('service') || lastMessage.includes('offer') || lastMessage.includes('provide') || lastMessage.includes('what do you do')) {
       return {
-        content: "I'd be happy to help you book an appointment! Could you please tell me:\n\n1. What service are you looking for?\n2. What date works best for you?\n3. Do you have a preferred time?",
+        content: `At ${businessName}, we offer the following services:\n\n${this.formatServices(systemPrompt)}\n\nWould you like to know more about any specific service or would you like to book an appointment?`,
+    }
+    }
+
+    if (lastMessage.includes('price') || lastMessage.includes('cost') || lastMessage.includes('how much') || lastMessage.includes('pricing')) {
+      return {
+    content: `Here are our service prices:\n\n${this.formatPricing(systemPrompt)}\n\nAll prices are in USD. Would you like to book an appointment for any of these services?`,
       }
     }
 
+    if (lastMessage.includes('book') || lastMessage.includes('appointment')) {
+   return {
+    content: "I'd be happy to help you book an appointment! Could you please tell me:\n\n1. What service are you looking for?\n2. What date works best for you?\n3. Do you have a preferred time?",
+ }
+    }
+
     if (lastMessage.includes('cancel')) {
-      return {
+   return {
         content: "I can help you cancel your appointment. Could you please provide your name and the date of your appointment so I can locate it?",
       }
     }
@@ -170,7 +188,7 @@ class MockAIService implements AIService {
     if (lastMessage.includes('reschedule')) {
       return {
         content: "I'd be happy to help you reschedule. What's your name, and what new date/time would work better for you?",
-      }
+   }
     }
 
     if (lastMessage.includes('available') || lastMessage.includes('time')) {
@@ -180,8 +198,32 @@ class MockAIService implements AIService {
     }
 
     return {
-      content: "Hello! I'm the AI booking assistant. I can help you:\n\n• Book a new appointment\n• Reschedule an existing appointment\n• Cancel an appointment\n• Check availability\n\nHow can I help you today?",
-    }
+   content: `Hello! I'm the AI booking assistant for ${businessName}. I can help you:\n\n• Learn about our services and pricing\n• Book a new appointment\n• Reschedule an existing appointment\n• Cancel an appointment\n• Check availability\n\nHow can I help you today?`,
+  }
+  }
+
+  private formatServices(systemPrompt?: string): string {
+    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
+    if (!servicesMatch) return '• Various services available'
+
+    const servicesStr = servicesMatch[1]
+    const services = servicesStr.split(', ').map(s => {
+      const match = s.match(/(.+?) \((\d+) min/)
+      return match ? `• ${match[1]} (${match[2]} minutes)` : `• ${s}`
+    })
+    return services.join('\n')
+  }
+
+  private formatPricing(systemPrompt?: string): string {
+    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
+    if (!servicesMatch) return 'Please contact us for pricing'
+
+    const servicesStr = servicesMatch[1]
+    const prices = servicesStr.split(', ').map(s => {
+const match = s.match(/(.+?) \((\d+) min, \$(\d+)\)/)
+ return match ? `• ${match[1]}: $${match[3]} (${match[2]} min)` : null
+    }).filter(Boolean)
+    return prices.join('\n') || 'Please contact us for pricing'
   }
 }
 
