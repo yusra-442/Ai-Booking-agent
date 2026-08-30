@@ -71,6 +71,42 @@ model Business {
   aiSettings  AISettings?
   notificationSettings NotificationSetting?
   businessSettings BusinessSettings?
+  knowledgeItems KnowledgeItem[]
+}
+
+// =====================
+// KNOWLEDGE BASE (Business Info, Products, FAQs, Services)
+// =====================
+
+model KnowledgeItem {
+  id          String   @id @default(cuid())
+  category    KnowledgeCategory
+  title       String
+  content     String
+  price       Float?
+  metadata    Json?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+
+  @@index([businessId, category])
+}
+
+enum KnowledgeCategory {
+  SERVICE
+  PRODUCT
+  FAQ
+  POLICY
+  ABOUT
+  PRICING
+  HOURS
+  CONTACT
+  OTHER
 }
 
 // =====================
