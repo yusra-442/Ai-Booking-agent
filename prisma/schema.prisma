@@ -49,6 +49,7 @@ model Business {
   phone       String?
   email       String?
   website     String?
+  whatsappNumber String?
   address     String?
   city        String?
   state       String?
@@ -69,6 +70,22 @@ model Business {
   notifications Notification[]
   aiSettings  AISettings?
   notificationSettings NotificationSetting?
+  businessSettings BusinessSettings?
+}
+
+// =====================
+// BUSINESS SETTINGS
+// =====================
+
+model BusinessSettings {
+  id              String   @id @default(cuid())
+  appointmentDuration Int   @default(30)
+  bufferMinutes   Int      @default(0)
+  slotInterval    Int      @default(30)
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String   @unique
 }
 
 // =====================
