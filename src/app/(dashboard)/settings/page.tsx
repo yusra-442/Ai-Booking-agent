@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,49 @@ export default function SettingsPage() {
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [timezone, setTimezone] = useState('America/New_York')
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings')
+      if (res.ok) {
+   const data = await res.json()
+     setBusinessName(data.name || '')
+        setEmail(data.email || '')
+      setPhone(data.phone || '')
+  setTimezone(data.timezone || 'America/New_York')
+      }
+    } catch (error) {
+    console.error('Failed to fetch settings:', error)
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/settings', {
+   method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName, email, phone, timezone }),
+      })
+      if (res.ok) {
+     setMessage('Settings saved successfully!')
+      } else {
+        const data = await res.json()
+        setMessage(data.error || 'Failed to save')
+      }
+    } catch (error) {
+      setMessage('Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -19,6 +62,12 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your business profile and preferences.</p>
       </div>
 
+   {message && (
+  <div className={`rounded-md p-3 text-sm ${message.includes('success') ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+    {message}
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -26,22 +75,22 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Business Name</Label>
-              <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Your Business Name" />
+         <Label>Business Name</Label>
+    <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Your Business Name" />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@business.com" />
+    <Label>Email</Label>
+       <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contact@business.com" />
             </div>
             <div className="space-y-2">
-              <Label>Phone</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+         <Label>Phone</Label>
+         <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
             </div>
             <div className="space-y-2">
-              <Label>Timezone</Label>
-              <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+         <Label>Timezone</Label>
+    <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
             </div>
-            <Button>Save Changes</Button>
+            <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Changes'}</Button>
           </CardContent>
         </Card>
 
@@ -51,7 +100,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
+     <div>
                 <p className="font-medium">Booking Confirmations</p>
                 <p className="text-sm text-muted-foreground">Send email when appointment is booked</p>
               </div>

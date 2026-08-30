@@ -61,3 +61,68 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function PUT(req: NextRequest) {
+  try {
+    const token = req.cookies.get('auth_token')?.value
+    if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const payload = await verifyToken(token)
+    if (!payload?.businessId) {
+   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id, name, description, duration, price, color } = await req.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'Service ID is required' }, { status: 400 })
+    }
+
+    const service = await db.service.update({
+      where: { id, businessId: payload.businessId },
+      data: {
+        name,
+        description,
+        duration: parseInt(duration),
+        price: price ? parseFloat(price) : null,
+        color: color || '#3b82f6',
+    },
+  })
+
+    return NextResponse.json(service)
+  } catch (error) {
+    console.error('Service update error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const token = req.cookies.get('auth_token')?.value
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const payload = await verifyToken(token)
+  if (!payload?.businessId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await req.json()
+
+    if (!id) {
+    return NextResponse.json({ error: 'Service ID is required' }, { status: 400 })
+    }
+
+    await db.service.delete({
+      where: { id, businessId: payload.businessId },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Service delete error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
