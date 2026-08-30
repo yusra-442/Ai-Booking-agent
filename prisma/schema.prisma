@@ -1,0 +1,293 @@
+// Prisma Schema for AI Booking Agent
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================
+// USER & AUTHENTICATION
+// =====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole  @default(OWNER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  business      Business? @relation(fields: [businessId], references: [id])
+  businessId    String?
+  appointments  Appointment[]
+  notifications Notification[]
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  STAFF
+}
+
+// =====================
+// BUSINESS
+// =====================
+
+model Business {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  industry    String?
+  phone       String?
+  email       String?
+  website     String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?
+  timezone    String   @default("America/New_York")
+  logo        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  users       User[]
+  customers   Customer[]
+  services    Service[]
+  appointments Appointment[]
+  workingHours WorkingHour[]
+  blockedDates BlockedDate[]
+  notifications Notification[]
+  aiSettings  AISettings?
+  notificationSettings NotificationSetting?
+}
+
+// =====================
+// CUSTOMERS
+// =====================
+
+model Customer {
+  id          String   @id @default(cuid())
+  firstName   String
+  lastName    String
+  email       String?
+  phone       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  appointments Appointment[]
+  conversations ConversationMessage[]
+
+  @@unique([businessId, email])
+  @@unique([businessId, phone])
+}
+
+// =====================
+// SERVICES (Appointment Types)
+// =====================
+
+model Service {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  duration    Int      // Duration in minutes
+  price       Float?
+  color       String   @default("#3b82f6")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+  appointments Appointment[]
+}
+
+// =====================
+// APPOINTMENTS
+// =====================
+
+model Appointment {
+  id          String            @id @default(cuid())
+  date        DateTime          @db.Date
+  startTime   DateTime
+  endTime     DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  business    Business          @relation(fields: [businessId], references: [id])
+  businessId  String
+  customer    Customer          @relation(fields: [customerId], references: [id])
+  customerId  String
+  service     Service           @relation(fields: [serviceId], references: [id])
+  serviceId   String
+  user        User?             @relation(fields: [userId], references: [id])
+  userId      String?
+  notifications Notification[]
+
+  @@index([businessId, date])
+  @@index([customerId])
+  @@index([status])
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// =====================
+// WORKING HOURS
+// =====================
+
+model WorkingHour {
+  id          String    @id @default(cuid())
+  dayOfWeek   Int       // 0 = Sunday, 1 = Monday, etc.
+  startTime   String    // "09:00"
+  endTime     String    // "17:00"
+  isAvailable Boolean   @default(true)
+
+  // Relations
+  business    Business  @relation(fields: [businessId], references: [id])
+  businessId  String
+
+  @@unique([businessId, dayOfWeek])
+}
+
+// =====================
+// BLOCKED DATES
+// =====================
+
+model BlockedDate {
+  id          String   @id @default(cuid())
+  date        DateTime @db.Date
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String
+
+  @@unique([businessId, date])
+}
+
+// =====================
+// NOTIFICATIONS
+// =====================
+
+model Notification {
+  id            String              @id @default(cuid())
+  type          NotificationType
+  status        NotificationStatus  @default(PENDING)
+  scheduledFor  DateTime
+  sentAt        DateTime?
+  subject       String?
+  body          String
+  createdAt     DateTime            @default(now())
+
+  // Relations
+  business      Business            @relation(fields: [businessId], references: [id])
+  businessId    String
+  appointment   Appointment?        @relation(fields: [appointmentId], references: [id])
+  appointmentId String?
+  user          User?               @relation(fields: [userId], references: [id])
+  userId        String?
+
+  @@index([status, scheduledFor])
+}
+
+enum NotificationType {
+  CONFIRMATION
+  REMINDER_24H
+  REMINDER_1H
+  CANCELLATION
+  RESCHEDULE
+  FOLLOW_UP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// =====================
+// NOTIFICATION SETTINGS
+// =====================
+
+model NotificationSetting {
+  id                String   @id @default(cuid())
+  confirmationEnabled Boolean @default(true)
+  reminder24hEnabled  Boolean @default(true)
+  reminder1hEnabled   Boolean @default(true)
+  followUpEnabled     Boolean @default(true)
+  followUpDelay       Int      @default(2) // Hours after appointment
+  confirmationMessage String?
+  reminderMessage     String?
+  followUpMessage     String?
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String   @unique
+}
+
+// =====================
+// AI SETTINGS
+// =====================
+
+model AISettings {
+  id              String   @id @default(cuid())
+  enabled         Boolean  @default(true)
+  greetingMessage String?
+  farewellMessage String?
+  handoffMessage  String?
+  systemPrompt    String?
+  maxTokens       Int      @default(500)
+  temperature     Float    @default(0.7)
+
+  // Relations
+  business    Business @relation(fields: [businessId], references: [id])
+  businessId  String   @unique
+}
+
+// =====================
+// CONVERSATION MESSAGES (AI Chat)
+// =====================
+
+model ConversationMessage {
+  id        String   @id @default(cuid())
+  role      MessageRole
+  content   String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  // Relations
+  customer  Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  @@index([customerId, createdAt])
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
