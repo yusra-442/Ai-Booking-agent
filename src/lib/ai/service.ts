@@ -154,76 +154,112 @@ class MockAIService implements AIService {
   async chat(messages: AIMessage[], systemPrompt?: string): Promise<AIResponse> {
     const lastMessage = messages[messages.length - 1]?.content.toLowerCase() || ''
 
-    // Extract services from system prompt if available
-    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
-    const servicesInfo = servicesMatch ? servicesMatch[1] : 'various services'
-    const businessNameMatch = systemPrompt?.match(/AI booking assistant for (.+?)\./)
+    // Extract info from system prompt
+    const businessNameMatch = systemPrompt?.match(/assistant for (.+?)\./)
     const businessName = businessNameMatch ? businessNameMatch[1] : 'our business'
 
-    // Simulate AI responses based on keywords
-    if (lastMessage.includes('service') || lastMessage.includes('offer') || lastMessage.includes('provide') || lastMessage.includes('what do you do')) {
-      return {
-        content: `At ${businessName}, we offer the following services:\n\n${this.formatServices(systemPrompt)}\n\nWould you like to know more about any specific service or would you like to book an appointment?`,
-    }
+    // Helper to extract section from system prompt
+    const getSection = (name: string) => {
+      const match = systemPrompt?.match(new RegExp(`${name}:([\\s\\S]*?)(?=\\n\\n|$)`))
+      return match ? match[1].trim() : ''
     }
 
-    if (lastMessage.includes('price') || lastMessage.includes('cost') || lastMessage.includes('how much') || lastMessage.includes('pricing')) {
-      return {
-    content: `Here are our service prices:\n\n${this.formatPricing(systemPrompt)}\n\nAll prices are in USD. Would you like to book an appointment for any of these services?`,
+    const aboutSection = getSection('ABOUT US')
+    const servicesSection = getSection('SERVICES')
+    const productsSection = getSection('PRODUCTS')
+    const pricingSection = getSection('PRICING INFORMATION')
+    const hoursSection = getSection('WORKING HOURS')
+    const contactSection = getSection('CONTACT')
+    const policySection = getSection('POLICIES')
+    const faqSection = getSection('FREQUENTLY ASKED QUESTIONS')
+
+    // Greeting - short and natural
+    if (lastMessage.match(/^(hi|hello|hey|salam|asalam|good morning|good evening)/)) {
+      return { content: `Hi! How can I help you today?` }
+    }
+
+    // Services questions
+    if (lastMessage.match(/(service|services|offer|provide|what do you do|what do you have)/)) {
+      if (servicesSection) {
+        return { content: `Here's what we offer:\n\n${servicesSection}\n\nWould you like to book an appointment or know more about any service?` }
       }
+      return { content: `We offer various services. Would you like me to tell you about a specific one?` }
     }
 
-    if (lastMessage.includes('book') || lastMessage.includes('appointment')) {
-   return {
-    content: "I'd be happy to help you book an appointment! Could you please tell me:\n\n1. What service are you looking for?\n2. What date works best for you?\n3. Do you have a preferred time?",
- }
-    }
-
-    if (lastMessage.includes('cancel')) {
-   return {
-        content: "I can help you cancel your appointment. Could you please provide your name and the date of your appointment so I can locate it?",
+    // Products questions
+    if (lastMessage.match(/(product|products|item|items|sell|buy|purchase|inventory|stock)/)) {
+      if (productsSection) {
+        return { content: `Here are our products:\n\n${productsSection}\n\nWould you like to know more about any product?` }
       }
+      return { content: `We have a range of products. What are you looking for?` }
     }
 
-    if (lastMessage.includes('reschedule')) {
-      return {
-        content: "I'd be happy to help you reschedule. What's your name, and what new date/time would work better for you?",
-   }
-    }
-
-    if (lastMessage.includes('available') || lastMessage.includes('time')) {
-      return {
-        content: "We have the following slots available this week:\n\n• Monday 2:00 PM\n• Tuesday 10:00 AM\n• Wednesday 3:00 PM\n• Friday 11:00 AM\n\nWhich works best for you?",
+    // Pricing questions
+    if (lastMessage.match(/(price|pricing|cost|how much|fee|charge|rate|expensive|cheap)/)) {
+      if (pricingSection) {
+        return { content: `${pricingSection}\n\nWould you like to know about anything else?` }
       }
+      if (servicesSection) {
+        const prices = servicesSection.split('\n').filter(l => l.includes('$'))
+        if (prices.length) {
+          return { content: `Here are our prices:\n\n${prices.join('\n')}\n\nWould you like to book an appointment?` }
+        }
+      }
+      return { content: `Our prices vary by service. What are you interested in?` }
     }
 
-    return {
-   content: `Hello! I'm the AI booking assistant for ${businessName}. I can help you:\n\n• Learn about our services and pricing\n• Book a new appointment\n• Reschedule an existing appointment\n• Cancel an appointment\n• Check availability\n\nHow can I help you today?`,
-  }
-  }
+    // Hours questions
+    if (lastMessage.match(/(hour|hours|open|close|timing|when|schedule|available days)/)) {
+      if (hoursSection) {
+        return { content: `Our hours:\n\n${hoursSection}\n\nWould you like to book a slot?` }
+      }
+      return { content: `We're open Monday to Saturday. Want me to check availability for a specific day?` }
+    }
 
-  private formatServices(systemPrompt?: string): string {
-    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
-    if (!servicesMatch) return '• Various services available'
+    // Contact/location questions
+    if (lastMessage.match(/(contact|phone|email|address|location|where|reach|whatsapp|call)/)) {
+      if (contactSection) {
+        return { content: `Here's how to reach us:\n\n${contactSection}\n\nIs there anything I can help you with?` }
+      }
+      return { content: `You can reach us by phone or email. Would you like our contact details?` }
+    }
 
-    const servicesStr = servicesMatch[1]
-    const services = servicesStr.split(', ').map(s => {
-      const match = s.match(/(.+?) \((\d+) min/)
-      return match ? `• ${match[1]} (${match[2]} minutes)` : `• ${s}`
-    })
-    return services.join('\n')
-  }
+    // Booking questions
+    if (lastMessage.match(/(book|booking|appointment|schedule|reserve)/)) {
+      return { content: `I'd love to help you book! Just tell me:\n\n1. Which service or product\n2. Preferred date\n3. Preferred time` }
+    }
 
-  private formatPricing(systemPrompt?: string): string {
-    const servicesMatch = systemPrompt?.match(/Available services: (.+?)\./)
-    if (!servicesMatch) return 'Please contact us for pricing'
+    // Cancellation
+    if (lastMessage.match(/(cancel|cancellation|refund)/)) {
+      if (policySection) {
+        return { content: `Here's our policy:\n\n${policySection}\n\nWould you like me to help with anything else?` }
+      }
+      return { content: `I can help with that. Please share your appointment details.` }
+    }
 
-    const servicesStr = servicesMatch[1]
-    const prices = servicesStr.split(', ').map(s => {
-const match = s.match(/(.+?) \((\d+) min, \$(\d+)\)/)
- return match ? `• ${match[1]}: $${match[3]} (${match[2]} min)` : null
-    }).filter(Boolean)
-    return prices.join('\n') || 'Please contact us for pricing'
+    // About questions
+    if (lastMessage.match(/(about|who are you|tell me about|what is|describe)/)) {
+      if (aboutSection) {
+        return { content: aboutSection }
+      }
+      return { content: `${businessName} is here to serve you. What would you like to know?` }
+    }
+
+    // FAQ-style questions
+    if (lastMessage.match(/(policy|policies|rules|terms|condition|warranty|guarantee|return|exchange)/)) {
+      if (policySection) {
+        return { content: policySection }
+      }
+      return { content: `I can help with that. Could you be more specific about what you'd like to know?` }
+    }
+
+    // Availability
+    if (lastMessage.match(/(available|slot|slots|free|opening)/)) {
+      return { content: `We have openings this week:\n\n• Monday 10:00 AM\n• Tuesday 2:00 PM\n• Wednesday 11:00 AM\n• Thursday 3:00 PM\n• Friday 9:00 AM\n\nWhich works for you?` }
+    }
+
+    // Default - natural helpful response
+    return { content: `I can help you with:\n\n• Services & pricing\n• Products & availability\n• Booking appointments\n• Business hours & location\n• Policies & FAQs\n\nWhat would you like to know?` }
   }
 }
 
