@@ -57,6 +57,9 @@ model Business {
   country     String?
   timezone    String   @default("Asia/Karachi")
   logo        String?
+  subscriptionPlan     String   @default("free")
+  subscriptionStatus   String   @default("active")
+  stripeCustomerId     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
