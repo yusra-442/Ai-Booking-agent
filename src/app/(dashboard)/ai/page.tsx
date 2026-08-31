@@ -12,7 +12,7 @@ interface Message {
 
 export default function AIAgentPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: "Hello! I'm your AI booking assistant. I can help you book appointments, check availability, reschedule, or cancel. How can I help you today?" }
+    { role: 'assistant', content: "Hi! I'm your AI assistant. I can help you with services, products, bookings, and more. What would you like to know?" }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -49,8 +49,8 @@ export default function AIAgentPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">AI Booking Agent</h1>
-        <p className="text-muted-foreground">Test your AI assistant and configure its behavior.</p>
+        <h1 className="text-2xl font-bold tracking-tight">AI Assistant</h1>
+        <p className="text-muted-foreground">Your intelligent assistant for services, products, and bookings.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -116,14 +116,14 @@ export default function AIAgentPage() {
               <p className="text-sm text-muted-foreground">{process.env.AI_PROVIDER || 'mock'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-1">Capabilities</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>Book appointments</li>
-                <li>Check availability</li>
-                <li>Reschedule</li>
-                <li>Cancel</li>
-                <li>Answer questions</li>
-              </ul>
+   <p className="text-sm font-medium mb-1">Capabilities</p>
+   <ul className="text-sm text-muted-foreground space-y-1">
+     <li>Services & products info</li>
+     <li>Pricing & availability</li>
+     <li>Book appointments</li>
+     <li>Answer questions</li>
+     <li>Business info</li>
+   </ul>
             </div>
             <Button variant="outline" className="w-full">Configure AI</Button>
           </CardContent>
